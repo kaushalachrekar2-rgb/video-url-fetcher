@@ -8,7 +8,7 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzd59CYEHds6p
 
 // ADD YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-    "https://supjav.com/400603.html"
+    "https://missav123.com/en/eyan-210-uncensored-leak"
 ];
 
 // ===========================
