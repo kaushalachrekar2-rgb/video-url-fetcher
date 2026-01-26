@@ -8,7 +8,7 @@ const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzd59CYEHds6p
 
 // ADD YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-    "https://xhamster44.desi/videos/playing-at-home-with-my-stepsister-ends-up-in-a-fuck-xhuT6w9"
+    "https://www.eporner.com/video-XjNQT08qPhB/schoolgirl-gangbang/"
 ];
 
 // ===========================
