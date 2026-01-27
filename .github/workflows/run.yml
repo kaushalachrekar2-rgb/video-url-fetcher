@@ -1,4 +1,4 @@
-name: Video URL Fetcher (Manual)
+name: Video URL Fetcher (Artifacts)
 
 on:
   workflow_dispatch:
@@ -8,9 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repo
+        uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
@@ -18,5 +19,13 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run Script
+      - name: Run Fetch Script
         run: node fetch.js
+
+      - name: Upload Results as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: video-urls
+          path: |
+            results.json
+            results.txt
