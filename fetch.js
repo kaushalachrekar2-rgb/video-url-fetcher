@@ -5,8 +5,10 @@ const fs = require("fs");
 
 // PUT YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-  "https://xhamster44.desi/videos/dad-catches-petite-teen-getting-pounded-by-her-step-brother-kenzie-reeves-xhgx3VV?utm_source=ext_shared&utm_medium=referral&utm_campaign=link",
-  "https://3xchina.net/ama-549/"
+  "https://www.fullporn.xxx/videos/93811179/you-remind-me-of-my-girlfriend-conservative-mother-breaks-her-own-rules-mandii-rose-debut/",
+"https://supjav.com/402267.html",
+"https://www.eporner.com/video-O95Mnh68Dud/beautiful-chinese-escort-269/"
+
 ];
 
 // Output files
