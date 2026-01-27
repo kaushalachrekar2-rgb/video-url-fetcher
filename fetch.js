@@ -1,31 +1,22 @@
 const puppeteer = require("puppeteer");
-const axios = require("axios");
+const fs = require("fs");
 
-// ================= CONFIG =================
+// ============ CONFIGURATION ============
 
-const GOOGLE_SCRIPT_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE";
-
+// PUT YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-  "LINK_1",
-  "LINK_2"
+  "https://xhamster44.desi/videos/dad-catches-petite-teen-getting-pounded-by-her-step-brother-kenzie-reeves-xhgx3VV?utm_source=ext_shared&utm_medium=referral&utm_campaign=link",
+  "https://3xchina.net/ama-549/"
 ];
 
-// ==========================================
+// Output files
+const JSON_FILE = "results.json";
+const TXT_FILE = "results.txt";
 
-async function sendBatchToGoogleSheet(results) {
-  try {
-    await axios.post(GOOGLE_SCRIPT_URL, {
-      batch: results
-    });
-    console.log("Batch sent to Google Sheets");
-  } catch (err) {
-    console.log("Sheet error:", err.message);
-  }
-}
+// ======================================
 
-async function processPage(browser, pageUrl, results) {
+async function processPage(browser, pageUrl, resultsSet) {
   const page = await browser.newPage();
-  const foundUrls = new Set();
 
   await page.setRequestInterception(true);
 
@@ -37,24 +28,22 @@ async function processPage(browser, pageUrl, results) {
       url.includes(".mp4") ||
       url.includes(".ts")
     ) {
-      foundUrls.add(url);
+      resultsSet.add(url);
     }
 
     req.continue();
   });
 
   try {
-    await page.goto(pageUrl, { waitUntil: "networkidle2", timeout: 90000 });
-    await page.waitForTimeout(5000); // extra wait for late requests
-  } catch (e) {
-    console.log("Page load error:", pageUrl);
-  }
-
-  for (let videoUrl of foundUrls) {
-    results.push({
-      pageUrl,
-      videoUrl
+    await page.goto(pageUrl, {
+      waitUntil: "networkidle2",
+      timeout: 90000
     });
+
+    // Extra wait to catch late network calls
+    await page.waitForTimeout(6000);
+  } catch (e) {
+    console.log("Failed to load:", pageUrl);
   }
 
   await page.close();
@@ -65,20 +54,30 @@ async function run() {
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
-  const results = [];
+  const resultsSet = new Set();
 
-  for (let link of VIDEO_PAGES) {
+  for (const link of VIDEO_PAGES) {
     console.log("Processing:", link);
-    await processPage(browser, link, results);
+    await processPage(browser, link, resultsSet);
   }
 
   await browser.close();
 
-  if (results.length > 0) {
-    await sendBatchToGoogleSheet(results);
-  } else {
-    console.log("No video URLs found");
-  }
+  const resultsArray = Array.from(resultsSet);
+
+  // Save JSON
+  fs.writeFileSync(
+    JSON_FILE,
+    JSON.stringify(resultsArray, null, 2)
+  );
+
+  // Save TXT
+  fs.writeFileSync(
+    TXT_FILE,
+    resultsArray.join("\n")
+  );
+
+  console.log(`Saved ${resultsArray.length} URLs`);
 }
 
 run();
