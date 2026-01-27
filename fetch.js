@@ -1,69 +1,84 @@
-const puppeteer = require('puppeteer');
-const axios = require('axios');
+const puppeteer = require("puppeteer");
+const axios = require("axios");
 
-// ====== CONFIGURATION ======
+// ================= CONFIG =================
 
-// PASTE YOUR GOOGLE SCRIPT URL HERE
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzd59CYEHds6pGPDB0n5Uiba49Ef-Tbqm19namzGLSA86XLej1TxBI_245RdNaRP4dv/exec";
+const GOOGLE_SCRIPT_URL = "PASTE_YOUR_GOOGLE_SCRIPT_URL_HERE";
 
-// ADD YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-    "https://www.eporner.com/video-XjNQT08qPhB/schoolgirl-gangbang/"
+  "LINK_1",
+  "LINK_2"
 ];
 
-// ===========================
+// ==========================================
 
-async function sendToGoogleSheet(pageUrl, videoUrl) {
-    try {
-        await axios.post(GOOGLE_SCRIPT_URL, {
-            pageUrl: pageUrl,
-            videoUrl: videoUrl
-        });
-        console.log("Saved:", videoUrl);
-    } catch (err) {
-        console.log("Error:", err.message);
-    }
+async function sendBatchToGoogleSheet(results) {
+  try {
+    await axios.post(GOOGLE_SCRIPT_URL, {
+      batch: results
+    });
+    console.log("Batch sent to Google Sheets");
+  } catch (err) {
+    console.log("Sheet error:", err.message);
+  }
 }
 
-async function processPage(pageUrl) {
+async function processPage(browser, pageUrl, results) {
+  const page = await browser.newPage();
+  const foundUrls = new Set();
 
-    const browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+  await page.setRequestInterception(true);
 
-    const page = await browser.newPage();
+  page.on("request", req => {
+    const url = req.url();
 
-    await page.setRequestInterception(true);
-
-    page.on('request', request => {
-
-        const url = request.url();
-
-        if (
-            url.includes(".m3u8") ||
-            url.includes(".mp4") ||
-            url.includes(".ts")
-        ) {
-            console.log("Found:", url);
-            sendToGoogleSheet(pageUrl, url);
-        }
-
-        request.continue();
-    });
-
-    try {
-        await page.goto(pageUrl, { waitUntil: 'networkidle2' });
-    } catch (e) {
-        console.log("Error loading:", pageUrl);
+    if (
+      url.includes(".m3u8") ||
+      url.includes(".mp4") ||
+      url.includes(".ts")
+    ) {
+      foundUrls.add(url);
     }
 
-    await browser.close();
+    req.continue();
+  });
+
+  try {
+    await page.goto(pageUrl, { waitUntil: "networkidle2", timeout: 90000 });
+    await page.waitForTimeout(5000); // extra wait for late requests
+  } catch (e) {
+    console.log("Page load error:", pageUrl);
+  }
+
+  for (let videoUrl of foundUrls) {
+    results.push({
+      pageUrl,
+      videoUrl
+    });
+  }
+
+  await page.close();
 }
 
 async function run() {
-    for (let link of VIDEO_PAGES) {
-        await processPage(link);
-    }
+  const browser = await puppeteer.launch({
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+  });
+
+  const results = [];
+
+  for (let link of VIDEO_PAGES) {
+    console.log("Processing:", link);
+    await processPage(browser, link, results);
+  }
+
+  await browser.close();
+
+  if (results.length > 0) {
+    await sendBatchToGoogleSheet(results);
+  } else {
+    console.log("No video URLs found");
+  }
 }
 
 run();
