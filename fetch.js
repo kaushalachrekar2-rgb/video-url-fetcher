@@ -5,7 +5,7 @@ const fs = require("fs");
 
 // 👉 PUT YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-  "https://missav123.one/en/v/start-481-uncensored-leaked", "https://spankbang.com/5x6sq/video/korean+girl+with+bf"
+  "https://missav123.one/en/v/start-481-uncensored-leaked", "https://missav123.com/en/bban-568-uncensored-leak"
 ];
 
 // Output files
