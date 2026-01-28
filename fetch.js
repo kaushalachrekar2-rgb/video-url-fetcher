@@ -1,19 +1,18 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 const fs = require("fs");
 
-// ============ CONFIGURATION ============
+// ===================== CONFIG =====================
 
-// PUT YOUR VIDEO PAGE LINKS HERE
+// 👉 PUT YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
-  "https://missav123.one/hi/v/start-481-uncensored-leaked"
-
+  "https://missav123.one/en/v/start-481-uncensored-leaked", "https://spankbang.com/5x6sq/video/korean+girl+with+bf"
 ];
 
 // Output files
 const JSON_FILE = "results.json";
 const TXT_FILE = "results.txt";
 
-// ======================================
+// ==================================================
 
 async function processPage(browser, pageUrl, resultsSet) {
   const page = await browser.newPage();
@@ -23,10 +22,10 @@ async function processPage(browser, pageUrl, resultsSet) {
   page.on("request", req => {
     const url = req.url();
 
+    // Capture only useful video streams
     if (
       url.includes(".m3u8") ||
-      url.includes(".mp4") ||
-      url.includes(".ts")
+      url.includes(".mp4")
     ) {
       resultsSet.add(url);
     }
@@ -40,9 +39,9 @@ async function processPage(browser, pageUrl, resultsSet) {
       timeout: 90000
     });
 
-    // Extra wait to catch late network calls
+    // Extra wait for late network requests
     await page.waitForTimeout(6000);
-  } catch (e) {
+  } catch (err) {
     console.log("Failed to load:", pageUrl);
   }
 
@@ -50,7 +49,10 @@ async function processPage(browser, pageUrl, resultsSet) {
 }
 
 async function run() {
+  console.log("Starting fetch job...");
+
   const browser = await puppeteer.launch({
+    executablePath: "/usr/bin/google-chrome",
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
@@ -63,21 +65,21 @@ async function run() {
 
   await browser.close();
 
-  const resultsArray = Array.from(resultsSet);
+  const results = Array.from(resultsSet);
 
   // Save JSON
   fs.writeFileSync(
     JSON_FILE,
-    JSON.stringify(resultsArray, null, 2)
+    JSON.stringify(results, null, 2)
   );
 
   // Save TXT
   fs.writeFileSync(
     TXT_FILE,
-    resultsArray.join("\n")
+    results.join("\n")
   );
 
-  console.log(`Saved ${resultsArray.length} URLs`);
+  console.log(`Saved ${results.length} video URLs`);
 }
 
 run();
