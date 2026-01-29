@@ -5,14 +5,7 @@ const fs = require("fs");
 
 // 👉 PUT YOUR VIDEO PAGE LINKS HERE
 const VIDEO_PAGES = [
- "https://missav123.com/en/bban-568-uncensored-leak",
-"https://sextb.net/2s24gyfdl",
-"https://javct.net/v/cr-012826-001",
-"https://javtiful.com/video/101875/dass-589",
-"https://javhd.today/313330/mosaic-apak-323-creampie-innocent-145cm-beautiful-slim-climax-yuna-i-m-cumming-i-m-cumming-her-fragile-body-changes-drastically-with-hard-pounding-a-plain-girl-turns-into-a-little-devil-intense-handjob-pounding-cowgirl-lewd-climax-student-guidance-hinata-yuna/",
-"https://javgg.net/jav/start-481-reduce-mosaic/",
-"https://javenglish.cc/video/dldss-346-eng-sub-moving-job-ntr-ive-been-secretly-sleeping-five-days-a-week-with-the-sweaty-muscular-movers-behind-my-husbands-back/",
-"https://topjav.tv/en/video/98848"
+ "https://javtrailers.com/video/sone00846"
 ];
 
 // Output files
