@@ -1,85 +1,77 @@
 const puppeteer = require("puppeteer-core");
-const fs = require("fs");
+const axios = require("axios");
 
-// ===================== CONFIG =====================
+// ========== CONFIG ==========
 
-// 👉 PUT YOUR VIDEO PAGE LINKS HERE
-const VIDEO_PAGES = [
- "https://javtrailers.com/video/sone00846"
+// Google Apps Script Web App URL
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMdXP20ErUjXyLj_fBNODHOu_2fp00csAKZBcOeeqD8-QADVp5QU_CUxyA2AJXVHodtQ/exec";
+
+// 👇 ADD YOUR CODES + LINKS HERE
+const VIDEO_ITEMS = [
+  {
+    code: "START-425",
+    url: "https://jav.guru/800169/start-425-minamo-were-a-couple-right-after-three-years-without-sex-officer-minamo-pretends-to-be-married-with-her-male-subordinate-leading-to-an-unexpected-real-encounter-a-week-long/"
+  },
+  {
+    code: "START-505",
+    url: "https://jav.guru/853543/start-505-the-expressionless-female-kendo-master-unimaginably-sweet-to-her-disciples-shell-make-you-cum-endlessly-with-her-cock-flattering-gaze-honjou-suzu/"
+  }
 ];
 
-// Output files
-const JSON_FILE = "results.json";
-const TXT_FILE = "results.txt";
+// ============================
 
-// ==================================================
+// 🔧 CHANGE THIS SELECTOR BASED ON WEBSITE
+const VIEW_SELECTOR = ".views, .view-count, [class*='view']";
 
-async function processPage(browser, pageUrl, resultsSet) {
-  const page = await browser.newPage();
-
-  await page.setRequestInterception(true);
-
-  page.on("request", req => {
-    const url = req.url();
-
-    // Capture only useful video streams
-    if (
-      url.includes(".m3u8") ||
-      url.includes(".mp4")
-    ) {
-      resultsSet.add(url);
-    }
-
-    req.continue();
-  });
-
+async function scrapeViews(page, url) {
   try {
-    await page.goto(pageUrl, {
+    await page.goto(url, {
       waitUntil: "networkidle2",
       timeout: 90000
     });
 
-    // Extra wait for late network requests
-    await page.waitForTimeout(6000);
-  } catch (err) {
-    console.log("Failed to load:", pageUrl);
-  }
+    await page.waitForTimeout(4000);
 
-  await page.close();
+    const viewsText = await page.evaluate(selector => {
+      const el = document.querySelector(selector);
+      return el ? el.innerText : null;
+    }, VIEW_SELECTOR);
+
+    return viewsText || "NOT FOUND";
+  } catch (err) {
+    return "ERROR";
+  }
 }
 
 async function run() {
-  console.log("Starting fetch job...");
-
   const browser = await puppeteer.launch({
     executablePath: "/usr/bin/google-chrome",
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
-  const resultsSet = new Set();
+  const page = await browser.newPage();
+  const results = [];
 
-  for (const link of VIDEO_PAGES) {
-    console.log("Processing:", link);
-    await processPage(browser, link, resultsSet);
+  for (const item of VIDEO_ITEMS) {
+    console.log("Fetching views for:", item.code);
+
+    const views = await scrapeViews(page, item.url);
+
+    results.push({
+      code: item.code,
+      url: item.url,
+      views: views
+    });
   }
 
   await browser.close();
 
-  const results = Array.from(resultsSet);
+  // Send batch to Google Sheets
+  await axios.post(GOOGLE_SCRIPT_URL, {
+    batch: results
+  });
 
-  // Save JSON
-  fs.writeFileSync(
-    JSON_FILE,
-    JSON.stringify(results, null, 2)
-  );
-
-  // Save TXT
-  fs.writeFileSync(
-    TXT_FILE,
-    results.join("\n")
-  );
-
-  console.log(`Saved ${results.length} video URLs`);
+  console.log("Views sent to Google Sheets");
 }
 
 run();
