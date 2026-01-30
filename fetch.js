@@ -1,12 +1,12 @@
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 
-// ========== CONFIG ==========
+// ================= CONFIG =================
 
-// Google Apps Script Web App URL
+// 🔗 PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMdXP20ErUjXyLj_fBNODHOu_2fp00csAKZBcOeeqD8-QADVp5QU_CUxyA2AJXVHodtQ/exec";
 
-// 👇 ADD YOUR CODES + LINKS HERE
+// 🧩 CODES WITH MULTIPLE VIDEO LINKS
 const VIDEO_ITEMS = [
   {
     code: "START-425",
@@ -17,11 +17,10 @@ const VIDEO_ITEMS = [
     url: "https://jav.guru/853543/start-505-the-expressionless-female-kendo-master-unimaginably-sweet-to-her-disciples-shell-make-you-cum-endlessly-with-her-cock-flattering-gaze-honjou-suzu/"
   }
 ];
+// EXACT selector from your website HTML
+const VIEW_SELECTOR = "span.javstats";
 
-// ============================
-
-// 🔧 CHANGE THIS SELECTOR BASED ON WEBSITE
-const VIEW_SELECTOR = ".views, .view-count, [class*='view']";
+// ==========================================
 
 async function scrapeViews(page, url) {
   try {
@@ -30,14 +29,22 @@ async function scrapeViews(page, url) {
       timeout: 90000
     });
 
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(3000);
 
-    const viewsText = await page.evaluate(selector => {
+    const views = await page.evaluate(selector => {
       const el = document.querySelector(selector);
-      return el ? el.innerText : null;
+      if (!el) return null;
+
+      // Example: "195,845 views"
+      let text = el.innerText.toLowerCase();
+
+      // Clean text
+      text = text.replace("views", "").replace(/,/g, "").trim();
+
+      return text;
     }, VIEW_SELECTOR);
 
-    return viewsText || "NOT FOUND";
+    return views || "NOT FOUND";
   } catch (err) {
     return "ERROR";
   }
@@ -53,25 +60,27 @@ async function run() {
   const results = [];
 
   for (const item of VIDEO_ITEMS) {
-    console.log("Fetching views for:", item.code);
+    for (const link of item.links) {
+      console.log(`Fetching views → ${item.code}`);
 
-    const views = await scrapeViews(page, item.url);
+      const views = await scrapeViews(page, link);
 
-    results.push({
-      code: item.code,
-      url: item.url,
-      views: views
-    });
+      results.push({
+        code: item.code,
+        url: link,
+        views: views
+      });
+    }
   }
 
   await browser.close();
 
-  // Send batch to Google Sheets
+  // Send everything in ONE request
   await axios.post(GOOGLE_SCRIPT_URL, {
     batch: results
   });
 
-  console.log("Views sent to Google Sheets");
+  console.log("Views successfully saved to Google Sheets");
 }
 
 run();
