@@ -1,7 +1,8 @@
 {
-  "name": "video-url-fetcher",
+  "name": "video-views-fetcher",
   "version": "1.0.0",
   "dependencies": {
-    "puppeteer-core": "^21.0.0"
+    "puppeteer-core": "^21.0.0",
+    "axios": "^1.6.0"
   }
 }
