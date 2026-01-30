@@ -3,10 +3,8 @@ const axios = require("axios");
 
 // ================= CONFIG =================
 
-// Google Apps Script Web App URL
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMdXP20ErUjXyLj_fBNODHOu_2fp00csAKZBcOeeqD8-QADVp5QU_CUxyA2AJXVHodtQ/exec";
 
-// Codes with multiple links (links MUST be arrays)
 const VIDEO_ITEMS = [
   {
     code: "START-425",
@@ -16,43 +14,62 @@ const VIDEO_ITEMS = [
   }
 ];
 
-// Exact selector from website
-const VIEW_SELECTOR = "span.javstats";
-
 // ==========================================
 
 async function scrapeViews(page, url) {
+  let viewValue = null;
+
+  // 👀 Listen to API responses
+  page.on("response", async response => {
+    try {
+      const resUrl = response.url();
+
+      // 🔍 Heuristic: stats / view APIs
+      if (
+        resUrl.includes("view") ||
+        resUrl.includes("stat") ||
+        resUrl.includes("api") ||
+        resUrl.includes("ajax")
+      ) {
+        const text = await response.text();
+
+        // Try to extract a number from JSON or text
+        const match = text.match(/"views?"\s*:\s*"?([\d,]+)/i);
+
+        if (match && !viewValue) {
+          viewValue = match[1].replace(/,/g, "");
+        }
+      }
+    } catch {}
+  });
+
   try {
     await page.goto(url, {
-      waitUntil: "domcontentloaded",
+      waitUntil: "networkidle2",
       timeout: 90000
     });
 
-    // ✅ WAIT EXPLICITLY FOR VIEWS ELEMENT
-    await page.waitForSelector(VIEW_SELECTOR, {
-      timeout: 15000
-    });
+    // Wait extra for API calls
+    await page.waitForTimeout(5000);
+  } catch {}
 
-    const views = await page.evaluate(selector => {
-      const el = document.querySelector(selector);
-      if (!el) return null;
+  // Fallback: DOM (if API failed)
+  if (!viewValue) {
+    try {
+      viewValue = await page.evaluate(() => {
+        const el = document.querySelector("span.javstats");
+        if (!el) return null;
 
-      // "195,845 views"
-      let text = el.innerText.toLowerCase();
-
-      text = text
-        .replace("views", "")
-        .replace(/,/g, "")
-        .trim();
-
-      return text;
-    }, VIEW_SELECTOR);
-
-    return views || "NOT FOUND";
-  } catch (err) {
-    console.log("View fetch failed:", url);
-    return "NOT FOUND";
+        return el.innerText
+          .toLowerCase()
+          .replace("views", "")
+          .replace(/,/g, "")
+          .trim();
+      });
+    } catch {}
   }
+
+  return viewValue || "NOT FOUND";
 }
 
 async function run() {
@@ -86,7 +103,7 @@ async function run() {
     batch: results
   });
 
-  console.log("Views successfully saved to Google Sheets");
+  console.log("Views saved to Google Sheets");
 }
 
 run();
