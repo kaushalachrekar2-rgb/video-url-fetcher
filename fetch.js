@@ -4,14 +4,15 @@ const axios = require("axios");
 // ================= CONFIG =================
 
 // 🔗 Google Apps Script Web App URL
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxMdXP20ErUjXyLj_fBNODHOu_2fp00csAKZBcOeeqD8-QADVp5QU_CUxyA2AJXVHodtQ/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzOtTHkf8KqkyW6qzl0Jv49r_w6WyBcfp9xKWksPH-C3phCuv_a8BpRtFHwzPUjT-WAlA/exec";
 
 // 👇 Codes with multiple links (links MUST be arrays)
 const VIDEO_ITEMS = [
   {
-    code: "START-425",
+    code: "START-464",
     links: [
-      "https://javtiful.com/video/102070/cawd-935"
+      "https://javtiful.com/video/98199/start-464",
+      "https://javtiful.com/video/98088/start-464"
     ]
   }
 ];
