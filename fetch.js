@@ -3,24 +3,41 @@ const axios = require("axios");
 
 // ================= CONFIG =================
 
-// 🔗 Google Apps Script Web App URL
+// Google Apps Script URL
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzOtTHkf8KqkyW6qzl0Jv49r_w6WyBcfp9xKWksPH-C3phCuv_a8BpRtFHwzPUjT-WAlA/exec";
 
-// 👇 Codes with multiple links (links MUST be arrays)
+// Codes and links
 const VIDEO_ITEMS = [
   {
     code: "START-464",
     links: [
-      "https://javtiful.com/video/98199/start-464",
-      "https://javtiful.com/video/98088/start-464"
+      "https://jav.guru/820383/start-464-i-fell-in-love-with-a-high-achieving-young-lady-who-can-only-love-a-gross-fat-guy-and-i-immersed-myself-in-the-sexual-development-of-an-innocent-woman-in-a-messy-room-honjou-suzu/"
     ]
   }
 ];
 
-// Selector for NEW website format
-const VIEW_SELECTOR = "div.fw-semibold.d-flex.align-items-center";
+// Multiple possible selectors (multi-site support)
+const VIEW_SELECTORS = [
+  "span.javstats",                                    // jav.guru (new site)
+  "div.fw-semibold.d-flex.align-items-center",        // previous site
+  "[class*='view']",                                  // generic fallback
+];
 
 // ==========================================
+
+async function extractViewsFromText(text) {
+  if (!text) return null;
+
+  // Match numbers like:
+  // 5,980 views
+  // 17.849 Views
+  // 12345 Views
+  const match = text.match(/([\d.,]+)\s*views/i);
+  if (!match) return null;
+
+  // Remove commas and dots
+  return match[1].replace(/[.,]/g, "");
+}
 
 async function scrapeViews(page, url) {
   try {
@@ -29,28 +46,31 @@ async function scrapeViews(page, url) {
       timeout: 90000
     });
 
-    // Explicitly wait for the view container
-    await page.waitForSelector(VIEW_SELECTOR, {
-      timeout: 15000
-    });
+    // Wait a bit for dynamic content
+    await page.waitForTimeout(3000);
 
-    const views = await page.evaluate(selector => {
-      const el = document.querySelector(selector);
-      if (!el) return null;
+    const views = await page.evaluate((selectors) => {
+      function extractNumber(text) {
+        const match = text.match(/([\d.,]+)\s*views/i);
+        if (!match) return null;
+        return match[1].replace(/[.,]/g, "");
+      }
 
-      // Example text: "17.849 Views"
-      const text = el.textContent || "";
+      for (let selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el) {
+          const text = el.innerText || el.textContent || "";
+          const number = extractNumber(text);
+          if (number) return number;
+        }
+      }
 
-      // Extract number (supports 17.849, 195,845, 12345)
-      const match = text.match(/([\d.,]+)\s*views/i);
-      if (!match) return null;
-
-      // Normalize: remove dots & commas
-      return match[1].replace(/[.,]/g, "");
-    }, VIEW_SELECTOR);
+      return null;
+    }, VIEW_SELECTORS);
 
     return views || "NOT FOUND";
   } catch (err) {
+    console.log("Error:", url);
     return "NOT FOUND";
   }
 }
@@ -82,12 +102,11 @@ async function run() {
 
   await browser.close();
 
-  // Send batch to Google Sheets
   await axios.post(GOOGLE_SCRIPT_URL, {
     batch: results
   });
 
-  console.log("Views successfully saved to Google Sheets");
+  console.log("Views saved to Google Sheets");
 }
 
 run();
